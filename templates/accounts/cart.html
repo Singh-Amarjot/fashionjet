@@ -1,0 +1,157 @@
+{% extends 'base/base.html' %}
+{% block start %}
+<br>
+<br>
+<div class="container-fluid">
+    <div class="row">
+        <aside class="col-lg-9">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-borderless table-shopping-cart">
+                        <thead class="text-muted">
+                            <tr class="small text-uppercase">
+                                <th scope="col">Product</th>
+                                <th scope="col" width="120">Quantity</th>
+                                <th scope="col" width="120">Price</th>
+                                <th scope="col" class="text-right d-none d-md-block" width="200"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for items in cart %}
+                            <tr>
+                                <td>
+                                    {% if items %}
+                                    <figure class="itemside align-items-center">
+                                        <div class="aside"><img src="/media/{{items.product.product_images.first.image}}" class="img-sm"></div>
+                                        <figcaption class="info"> <a href="{% url 'get_product' items.product.slug %}" class="title text-dark" data-abc="true">{{items.product.product_name}}</a>
+                                            <p class="text-muted small"> {{items.product.category}} <br>
+                                                {%if items.size_variant%}
+                                                SIZE: {{items.size_variant.size_name}}{% endif %}</p>
+                                        </figcaption>
+                                    </figure>
+                                    {% endif %}
+                                </td>
+                                <td> 
+                                    <div class="price-wrap"> <var class="price">&nbsp;&nbsp;&nbsp;&nbsp;{{items.quantity}}</var> </td>
+                                    {% comment %} <select class="form-control">
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                    </select>  {% endcomment %}
+                                </td>
+                                <td>
+                                    <div class="price-wrap"> <var class="price">Rs {{items.get_product_gross_price}}</var> <small class="text-muted"> Rs {{items.get_product_price}} per item </small> </div>
+                                </td>
+                                <td class="text-right d-none d-md-block"> <a data-original-title="Save to Wishlist" title="" href="" class="btn btn-light" data-toggle="tooltip" data-abc="true"> <i class="fa fa-heart"></i></a> <a href="{% url 'remove_cart' items.uid %}" class="btn btn-light" data-abc="true"> Remove</a> </td>
+                            </tr>
+                            {% endfor %}
+                            
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </aside>
+        <aside class="col-lg-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <form method="POST">
+                        {% include 'base/alert.html' %}
+                        {% csrf_token %}
+                        <div class="form-group"> <label>Have coupon?</label>
+                            <div class="input-group"> <input type="text" class="form-control coupon" name="coupon" placeholder="Coupon code"> <span class="input-group-append"> <button class="btn btn-primary btn-apply coupon" type="submit">Apply</button> </span> </div>
+                        </div>
+                        {% if total.coupon.coupon_code%}
+                        <a href="{% url 'remove_coupon' total.uid %}" class="btn btn-out btn-success btn-square btn-main">{{total.coupon.coupon_code}}</button> </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <dl class="dlist-align">
+                        {% if total.full_price %}
+                        <dt>Total price:</dt>
+                        <dd class="text-right ml-3">
+                             Rs {{total.full_price}}
+                            {% endif %}
+                        </dd>
+                    </dl>
+                    <dl class="dlist-align">
+                        {% if total.coupon.discount_price %}
+                        <dt>Discount:</dt>
+                        <dd class="text-right text-danger ml-3">- Rs {{total.coupon.discount_price}}</dd>
+                        {% endif %}
+                    </dl>
+                    <dl class="dlist-align">
+                        {% if total.get_cart_total %}
+                        <dt>Total:</dt>
+                        <dd class="text-right text-dark b ml-3"><strong>
+                             Rs {{total.get_cart_total}}
+                            {% endif %}
+                        </strong></dd>
+                        
+                    </dl>
+                    <hr> 
+                    {% if payment %}
+                    <button id="rzp-button1" class="btn btn-out btn-primary btn-square btn-main" > Make Purchase </button>{% endif %} <a href="{% url 'index' %}" class="btn btn-out btn-success btn-square btn-main ml-2" data-abc="true">Continue Shopping</a>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var options = {
+        "key": "rzp_test_A5fjw7wjdUv8Ff", // Enter the Key ID generated from the Dashboard
+        "amount": "{{payment.amount}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+        "currency": "INR",
+        "name": "Fashionjet",
+        "description": "For Ordering on Fashionjet",
+        "image": "http://localhost:8000/static/images/f%20logo.png",
+        "order_id": "{{payment.id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+        "handler": function (response){
+            window.location.href=`http://localhost:8000/accounts/success/?razorpay_payment_id=${response.razorpay_payment_id}&razorpay_order_id=${response.razorpay_order_id}&razorpay_signature=${response.razorpay_signature}`
+            //window.location.href=`http://localhost:8000/accounts/success/?order_id=${response.razorpay_order_id}`
+            /*alert(response.razorpay_payment_id);
+            alert(response.razorpay_order_id);
+            alert(response.razorpay_signature)
+             */
+        },
+        "prefill": {
+            "name": "{{total.user.first_name}}",
+            "email": "{{total.user.email}}",
+            "contact": "9000090000"
+        },
+        "notes": {
+            "address": "{{total.uid}}"
+        },
+        "theme": {
+            "color": "#3399cc"
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    rzp1.on('payment.failed', function (response){
+            //alert(response.error.code);
+            //alert(response.error.description);
+            //alert(response.error.source);
+            //alert(response.error.step);
+            alert(response.error.reason);
+            //alert(response.error.metadata.order_id);
+            //alert(response.error.metadata.payment_id);
+    });
+    document.getElementById('rzp-button1').onclick = function(e){
+        rzp1.open();
+        e.preventDefault();
+    }
+    </script>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+{% endblock %}
