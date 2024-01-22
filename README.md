@@ -4,5 +4,6 @@ This project has all the modern functionalities of a contemporary e-commerce web
 - discount coupon functionality
 - category based product filteration system
 - razorPay payment gateway integration
+- price changer according to product variant 
 - eye-catching UI-
 - database storage based on sqlite and many more .
